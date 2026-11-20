@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Horarios de Ignacio · Punto Bici</title>
+  <title>La semana de Ignacio · Punto Bici</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,680&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,520;9..144,620&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #efe6d8;
-      --surface: #fbf6ee;
-      --ink: #1c1712;
-      --muted: #6e655c;
-      --accent: #9a3e1c;
+      --bg: #eef2f1;
+      --surface: #fffcf8;
+      --ink: #1b2a33;
+      --muted: #6d7874;
+      --accent: #2c6b5c;
     }
     * { box-sizing: border-box; }
     html, body {
@@ -23,57 +23,47 @@
       color: var(--ink);
       font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
     }
-    button, input { font: inherit; }
-    button { cursor: pointer; }
-    .wrap { max-width: 32rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
-    .kicker { margin: 0; color: var(--accent); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
-    h1 { margin: 0.4rem 0 0; font-family: Fraunces, Georgia, serif; font-size: 2rem; font-weight: 560; line-height: 1.05; }
-    .lead { color: var(--muted); line-height: 1.5; }
-    .card { background: var(--surface); border-radius: 1.25rem; padding: 1.1rem 1rem; }
-    .gate { min-height: 100dvh; display: flex; align-items: center; }
-    label { font-weight: 600; font-size: 0.95rem; }
-    .field { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.45rem; background: var(--bg); border-radius: 1rem; padding: 0 0.8rem; }
-    input {
-      height: 3rem; width: 100%; border: 0; background: transparent; color: var(--ink); outline: none;
-    }
-    .btn {
-      margin-top: 1rem; height: 3rem; width: 100%; border: 0; border-radius: 1rem;
-      background: var(--accent); color: var(--surface); font-weight: 650;
-    }
+    button { font: inherit; cursor: pointer; }
+    .wrap { max-width: 32rem; margin: 0 auto; padding: 1.75rem 1rem 4rem; }
+    .kicker { margin: 0; color: var(--accent); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; }
+    h1 { margin: 0.45rem 0 0; font-family: Fraunces, Georgia, serif; font-size: 2.15rem; font-weight: 520; line-height: 1.08; }
+    .lead { color: var(--muted); line-height: 1.55; font-size: 0.95rem; }
+    .lead.ink { color: var(--ink); font-size: 1.02rem; }
+    .sync { color: var(--muted); font-size: 0.75rem; }
     .err { color: var(--accent); font-size: 0.9rem; }
-    .hint { color: var(--muted); font-size: 0.9rem; }
-    .top { display: flex; justify-content: space-between; align-items: flex-end; gap: 0.75rem; }
-    .sync { max-width: 7rem; text-align: right; color: var(--muted); font-size: 0.75rem; line-height: 1.3; }
-    .stats { margin-top: 1.1rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; }
-    .stat { background: var(--surface); border-radius: 1rem; padding: 0.7rem 0.45rem; }
-    .stat strong { display: block; margin-top: 0.25rem; font-family: Fraunces, Georgia, serif; font-size: 1.05rem; font-variant-numeric: tabular-nums; line-height: 1.15; }
-    .stat span, .note { color: var(--muted); }
-    .stat span { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
-    .stat.pay { background: var(--accent); color: var(--surface); }
-    .stat.pay span { color: rgba(251, 246, 238, 0.8); }
-    .note { margin: 0.55rem 0 0; font-size: 0.78rem; line-height: 1.4; }
+    .hero, .card { background: var(--surface); border-radius: 1.4rem; padding: 1rem 1rem 0.95rem; }
+    .hero { margin-top: 1.15rem; }
+    .eyebrow { margin: 0; color: var(--muted); font-size: 0.72rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; }
+    .hours-big { margin: 0.2rem 0 0; font-family: Fraunces, Georgia, serif; font-size: 2.35rem; font-weight: 520; font-variant-numeric: tabular-nums; }
+    .split { margin-top: 0.85rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; border-top: 1px solid var(--bg); padding-top: 0.75rem; }
+    .split p { margin: 0; }
+    .split .lbl { color: var(--muted); font-size: 0.78rem; }
+    .money { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+    .money .sym { opacity: 0.6; }
+    .note { margin: 0.7rem 0 0; color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
     .live {
-      margin-top: 0.9rem; background: var(--ink); color: var(--surface);
-      border-radius: 1rem; padding: 0.85rem 1rem;
+      margin-top: 1.15rem; background: rgba(44, 107, 92, 0.1); color: var(--ink);
+      border-radius: 1.4rem; padding: 1rem;
     }
-    .live p { margin: 0.2rem 0 0; }
-    .live .big { font-family: Fraunces, Georgia, serif; font-size: 1.6rem; font-variant-numeric: tabular-nums; }
-    .live .sub { color: rgba(251, 246, 238, 0.8); font-size: 0.85rem; }
-    .nav { margin-top: 1.1rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .live p { margin: 0.25rem 0 0; }
+    .live .big { font-family: Fraunces, Georgia, serif; font-size: 1.85rem; font-weight: 520; font-variant-numeric: tabular-nums; }
+    .live .sub { color: rgba(27, 42, 51, 0.78); font-size: 0.92rem; line-height: 1.45; }
+    .formula { margin: 0.35rem 0 0; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.72rem; color: var(--muted); }
+    .nav { margin-top: 1.4rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
     .round {
       width: 2.75rem; height: 2.75rem; border: 0; border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 1.3rem;
     }
     .round:disabled { opacity: 0.4; }
     .nav-title { text-align: center; }
     .nav-title p { margin: 0; font-family: Fraunces, Georgia, serif; font-size: 1.25rem; }
-    .linkish { border: 0; background: none; color: var(--accent); font-weight: 700; padding: 0; }
+    .linkish { border: 0; background: none; color: var(--accent); font-weight: 500; padding: 0; }
     .strip { margin-top: 0.9rem; display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.25rem; }
     .daychip {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       min-height: 3.6rem; border-radius: 0.8rem; background: var(--surface); color: inherit; text-decoration: none;
     }
-    .daychip small { color: var(--muted); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; }
-    .daychip b { font-family: Fraunces, Georgia, serif; font-size: 1.05rem; font-weight: 560; }
+    .daychip small { color: var(--muted); font-size: 0.62rem; font-weight: 500; letter-spacing: 0.04em; }
+    .daychip b { font-family: Fraunces, Georgia, serif; font-size: 1.05rem; font-weight: 520; }
     .daychip i { width: 0.35rem; height: 0.35rem; margin-top: 0.2rem; border-radius: 99px; background: transparent; display: block; }
     .daychip.on i { background: var(--accent); }
     .daychip.today { background: var(--accent); color: var(--surface); }
@@ -81,14 +71,14 @@
     .daychip.today i { background: var(--surface); }
     ul { list-style: none; margin: 0.9rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.7rem; }
     li { scroll-margin-top: 0.8rem; }
-    .rowhead { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-weight: 650; }
+    .rowhead { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-weight: 500; }
     .hoy { color: var(--accent); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; }
-    .shift { margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--bg); }
+    .shift { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--bg); }
     .shift:first-of-type { margin-top: 0.45rem; padding-top: 0; border-top: 0; }
-    .hours { margin: 0; font-family: Fraunces, Georgia, serif; font-size: 1.55rem; font-variant-numeric: tabular-nums; }
-    .meta { display: flex; justify-content: space-between; gap: 0.6rem; align-items: flex-end; margin-top: 0.2rem; }
-    .meta span { color: var(--muted); font-size: 0.85rem; }
-    .meta b { font-variant-numeric: tabular-nums; }
+    .arrived { margin: 0; font-family: Fraunces, Georgia, serif; font-size: 1.55rem; font-weight: 520; font-variant-numeric: tabular-nums; }
+    .left { margin: 0; font-family: Fraunces, Georgia, serif; font-size: 1.55rem; font-weight: 520; font-variant-numeric: tabular-nums; color: var(--muted); }
+    .stay { margin: 0.45rem 0 0; font-size: 0.92rem; }
+    .line { margin: 0.35rem 0 0; display: flex; justify-content: space-between; gap: 0.6rem; align-items: baseline; color: var(--muted); font-size: 0.88rem; }
     .open { color: var(--accent); }
     .empty { margin: 0.45rem 0 0; color: var(--muted); font-size: 0.9rem; }
   </style>
@@ -211,30 +201,43 @@
       };
     }
 
+    function quietMoney(amount) {
+      const text = formatARS(amount);
+      const cut = text.search(/\d/);
+      if (cut < 0) return '<span class="money">' + escapeHtml(text) + "</span>";
+      return '<span class="money"><span class="sym">' + escapeHtml(text.slice(0, cut)) + "</span>" + escapeHtml(text.slice(cut)) + "</span>";
+    }
+
+    function weekSentence(view) {
+      if (view.totalMinutes <= 0) return "En esta semana todavía no hay horarios.";
+      let note = "Esta semana estuvo " + formatHm(view.totalMinutes) + " en el local. Con la hora convenida, la cuenta da " + formatARS(view.totalAmount) + ".";
+      if (view.liveAmount > 0) {
+        note += " " + formatARS(view.closedAmount) + " es de días ya cerrados y " + formatARS(view.liveAmount) + " es de hoy, que sigue abierto.";
+      }
+      if (view.paidAmount > 0) note += " Ya quedó liquidado " + formatARS(view.paidAmount) + ".";
+      const closedLeft = Math.max(0, view.closedAmount - view.paidAmount);
+      if (closedLeft > 0) note += " El resto de los días cerrados suma " + formatARS(closedLeft) + ".";
+      return note;
+    }
+
     function renderApp() {
       const view = buildView();
       const today = argentinaDateStr();
       const updated = state.updatedAt == null
-        ? "Actualizando horarios…"
-        : "Recién actualizado · hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
-      let note;
-      if (view.liveAmount > 0) {
-        note = "Ignacio está trabajando. Esta semana lleva " + formatHm(view.totalMinutes) + ". A " + formatARS(state.hourlyRate) + " la hora, van " + formatARS(view.totalAmount) + ": " + formatARS(view.closedAmount) + " de jornadas terminadas y " + formatARS(view.liveAmount) + " del turno de ahora.";
-      } else if (view.totalAmount > 0) {
-        note = "Esta semana Ignacio hizo " + formatHm(view.totalMinutes) + ". A " + formatARS(state.hourlyRate) + " la hora, le corresponden " + formatARS(view.totalAmount) + ".";
-      } else {
-        note = "En esta semana todavía no hay horarios cargados.";
-      }
-      if (view.paidAmount > 0) note += " Ya está pago " + formatARS(view.paidAmount) + ".";
+        ? "Actualizando…"
+        : "Se actualizó solo · hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
+      const note = weekSentence(view);
 
       let liveHtml = "";
       if (view.live) {
         const elapsed = Math.max(0, Math.floor((state.now - Number(view.live.startTimestampMs)) / 60000));
         const money = Math.round((elapsed / 60) * state.hourlyRate);
         const fecha = String(view.live.startDateStr || "").split("-").reverse().join("/");
-        liveHtml = '<div class="live"><p class="kicker" style="color:rgba(251,246,238,.8)">Ignacio está trabajando</p>' +
-          '<p class="big">Entró a las ' + escapeHtml(view.live.startTimeStr || "--:--") + "</p>" +
-          '<p class="sub" id="liveLine">Sigue en el local desde el ' + escapeHtml(fecha) + ". Lleva " + formatHm(elapsed) + ". A " + formatARS(state.hourlyRate) + " la hora, este turno va en " + formatARS(money) + ".</p></div>";
+        liveHtml = '<div class="live"><p class="kicker">Hoy está en el local</p>' +
+          '<p class="big">Llegó a las ' + escapeHtml(view.live.startTimeStr || "--:--") + "</p>" +
+          '<p class="sub" id="liveStay">Sigue ahí, desde el ' + escapeHtml(fecha) + ". Van " + formatHm(elapsed) + ".</p>" +
+          '<p class="formula" id="liveFormula">' + elapsed + " min × " + escapeHtml(formatARS(state.hourlyRate)) + " / 60</p>" +
+          '<p class="sub">La cuenta de hoy, por ahora, <span id="livePay">' + quietMoney(money) + "</span></p></div>";
       }
 
       const chips = view.days.map(function (day) {
@@ -246,21 +249,27 @@
       const list = view.days.map(function (day) {
         let body = "";
         if (day.worked.length === 0 && !day.franco && !day.openHere) {
-          body += '<p class="empty">No trabajó</p>';
+          body += '<p class="empty">Ese día no estuvo.</p>';
         }
         if (day.franco && day.worked.length === 0) {
-          body += '<p class="empty" style="color:var(--ink)">No trabajó · ' + escapeHtml(day.franco.reason || "franco") + "</p>";
+          body += '<p class="empty" style="color:var(--ink)">No estuvo · ' + escapeHtml(day.franco.reason || "franco") + "</p>";
         }
         day.worked.forEach(function (rec) {
-          body += '<div class="shift"><p class="hours">Entró ' + escapeHtml(rec.startTime || "--:--") + ' <span style="color:var(--muted)">· salió ' + escapeHtml(rec.endTime || "--:--") + "</span></p>" +
-            '<div class="meta"><span>' + escapeHtml(rec.durationLabel || formatHm(rec.totalMinutes)) +
-            (Number(rec.breakMinutes) > 0 ? " · descanso " + rec.breakMinutes + " min" : "") +
-            " · " + (rec.paidStatus === "paid" ? "Ya pago" : "A pagar") +
-            '</span><b>' + formatARS(rec.totalAmount) + "</b></div></div>";
+          const mins = Number(rec.totalMinutes) || 0;
+          const rate = Number(rec.hourlyRate) || state.hourlyRate;
+          body += '<div class="shift"><p class="arrived">Llegó ' + escapeHtml(rec.startTime || "--:--") + "</p>" +
+            '<p class="left">Se fue ' + escapeHtml(rec.endTime || "--:--") + "</p>" +
+            '<p class="stay">' + escapeHtml(rec.durationLabel || formatHm(mins)) + " en el local" +
+            (Number(rec.breakMinutes) > 0 ? " · " + rec.breakMinutes + " min de descanso" : "") + "</p>" +
+            '<p class="formula">' + mins + " min × " + escapeHtml(formatARS(rate)) + " / 60</p>" +
+            '<p class="line"><span>' + (rec.paidStatus === "paid" ? "Ya liquidado" : "Cuenta del día") + "</span>" + quietMoney(rec.totalAmount) + "</p></div>";
         });
         if (day.openHere && view.live) {
-          body += '<div class="shift"><p class="hours">Entró ' + escapeHtml(view.live.startTimeStr || "--:--") + ' <span style="color:var(--muted)">· sigue ahora</span></p>' +
-            '<div class="meta"><span class="open" id="liveDayLine">Trabajando · ' + formatHm(view.liveMinutes) + "</span><b id=\"liveDayPay\">" + formatARS(view.liveAmount) + "</b></div></div>";
+          body += '<div class="shift"><p class="arrived">Llegó ' + escapeHtml(view.live.startTimeStr || "--:--") + "</p>" +
+            '<p class="left open">Sigue en el local</p>' +
+            '<p class="stay" id="liveDayStay">' + formatHm(view.liveMinutes) + ", y sigue</p>" +
+            '<p class="formula" id="liveDayFormula">' + view.liveMinutes + " min × " + escapeHtml(formatARS(state.hourlyRate)) + " / 60</p>" +
+            '<p class="line"><span>Cuenta de hoy, por ahora</span><span id="liveDayPay">' + quietMoney(view.liveAmount) + "</span></p></div>";
         }
         return '<li class="card" id="dia-' + day.iso + '"><div class="rowhead"><p>' + day.short + " " + day.num + " " + day.month + "</p>" +
           (day.iso === today ? '<span class="hoy">Hoy</span>' : "") + "</div>" + body + "</li>";
@@ -268,17 +277,19 @@
 
       const back = state.weekOffset !== 0
         ? '<button type="button" class="linkish" id="btnThisWeek">Volver a esta semana</button>'
-        : '<p class="hint" style="margin:0">Esta semana</p>';
+        : '<p class="sync" style="margin:0">Esta semana</p>';
 
       document.getElementById("app").innerHTML =
-        '<header><p class="kicker">Punto Bici</p><h1>Horarios de Ignacio</h1>' +
-        '<p class="lead" style="color:var(--ink)">Juan, acá podés ver los horarios de entrada y de salida de Ignacio.</p>' +
-        '<p class="lead">La hora se paga a ' + formatARS(state.hourlyRate) + ' pesos argentinos. En cada día está a qué hora entró, a qué hora salió, cuántas horas hizo y cuánto le corresponde por esa jornada.</p>' +
-        '<p class="sync" id="syncLabel" style="max-width:none;text-align:left;margin-top:0.6rem">' + updated + "</p></header>" +
-        '<section class="stats">' +
-          '<div class="stat"><span>La hora</span><strong>' + formatARS(state.hourlyRate) + "</strong></div>" +
-          '<div class="stat"><span>Esta semana</span><strong id="statHours">' + formatHm(view.totalMinutes) + "</strong></div>" +
-          '<div class="stat pay"><span>Le corresponde</span><strong id="statPay">' + formatARS(view.totalAmount) + "</strong></div>" +
+        '<header><p class="kicker">Punto Bici</p><h1>La semana de Ignacio</h1>' +
+        '<p class="lead ink">Juan, acá está cada horario: a qué hora llegó, a qué hora se fue y cuánto tiempo estuvo en el local.</p>' +
+        '<p class="lead">La hora convenida son ' + formatARS(state.hourlyRate) + '. La cuenta de cada día sale sola de esos minutos por esa hora. No hay otro número.</p>' +
+        '<p class="sync" id="syncLabel" style="margin-top:0.7rem">' + updated + "</p></header>" +
+        liveHtml +
+        '<section class="hero">' +
+          '<p class="eyebrow">En el local, esta semana</p>' +
+          '<p class="hours-big" id="weekHours">' + formatHm(view.totalMinutes) + "</p>" +
+          '<div class="split"><div><p class="lbl">Hora convenida</p><p>' + quietMoney(state.hourlyRate) + "</p></div>" +
+          '<div><p class="lbl">Cuenta de esas horas</p><p id="weekPay">' + quietMoney(view.totalAmount) + "</p></div></div>" +
         "</section>" +
         '<p class="note" id="weekNote">' + note + "</p>" +
         (state.error ? '<p class="err">' + escapeHtml(state.error) + "</p>" : "") +
@@ -316,10 +327,10 @@
         });
         const changed = snap !== lastSnapshot;
         lastSnapshot = snap;
-        if (changed || !document.getElementById("statHours")) renderApp();
+        if (changed || !document.getElementById("weekHours")) renderApp();
       } catch (e) {
         state.error = "No se pudieron leer los horarios. Reintentá en un momento.";
-        if (!document.getElementById("statHours")) renderApp();
+        if (!document.getElementById("weekHours")) renderApp();
         else {
           const err = document.querySelector(".err");
           if (!err) renderApp();
@@ -335,32 +346,33 @@
     function tickLive() {
       state.now = Date.now();
       const view = buildView();
-      const hours = document.getElementById("statHours");
-      const pay = document.getElementById("statPay");
+      const hours = document.getElementById("weekHours");
+      const pay = document.getElementById("weekPay");
       const sync = document.getElementById("syncLabel");
       const note = document.getElementById("weekNote");
       if (hours) hours.textContent = formatHm(view.totalMinutes);
-      if (pay) pay.textContent = formatARS(view.totalAmount);
+      if (pay) pay.innerHTML = quietMoney(view.totalAmount);
       if (sync && state.updatedAt) {
-        sync.textContent = "Recién actualizado · hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
+        sync.textContent = "Se actualizó solo · hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
       }
-      if (note) {
-        if (view.liveAmount > 0) {
-          note.textContent = "Ignacio está trabajando. Esta semana lleva " + formatHm(view.totalMinutes) + ". A " + formatARS(state.hourlyRate) + " la hora, van " + formatARS(view.totalAmount) + ": " + formatARS(view.closedAmount) + " de jornadas terminadas y " + formatARS(view.liveAmount) + " del turno de ahora." +
-            (view.paidAmount > 0 ? " Ya está pago " + formatARS(view.paidAmount) + "." : "");
-        }
-      }
-      const liveLine = document.getElementById("liveLine");
-      if (liveLine && view.live) {
+      if (note) note.textContent = weekSentence(view);
+      if (view.live) {
         const elapsed = Math.max(0, Math.floor((state.now - Number(view.live.startTimestampMs)) / 60000));
         const money = Math.round((elapsed / 60) * state.hourlyRate);
         const fecha = String(view.live.startDateStr || "").split("-").reverse().join("/");
-        liveLine.textContent = "Sigue en el local desde el " + fecha + ". Lleva " + formatHm(elapsed) + ". A " + formatARS(state.hourlyRate) + " la hora, este turno va en " + formatARS(money) + ".";
+        const stay = document.getElementById("liveStay");
+        const formula = document.getElementById("liveFormula");
+        const livePay = document.getElementById("livePay");
+        if (stay) stay.textContent = "Sigue ahí, desde el " + fecha + ". Van " + formatHm(elapsed) + ".";
+        if (formula) formula.textContent = elapsed + " min × " + formatARS(state.hourlyRate) + " / 60";
+        if (livePay) livePay.innerHTML = quietMoney(money);
       }
-      const dayLine = document.getElementById("liveDayLine");
+      const dayStay = document.getElementById("liveDayStay");
+      const dayFormula = document.getElementById("liveDayFormula");
       const dayPay = document.getElementById("liveDayPay");
-      if (dayLine) dayLine.textContent = "Trabajando · " + formatHm(view.liveMinutes);
-      if (dayPay) dayPay.textContent = formatARS(view.liveAmount);
+      if (dayStay) dayStay.textContent = formatHm(view.liveMinutes) + ", y sigue";
+      if (dayFormula) dayFormula.textContent = view.liveMinutes + " min × " + formatARS(state.hourlyRate) + " / 60";
+      if (dayPay) dayPay.innerHTML = quietMoney(view.liveAmount);
     }
 
     boot();
