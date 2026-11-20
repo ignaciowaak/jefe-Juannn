@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Registro · Punto Bici</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,680&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #efe6d8;
+      --surface: #fbf6ee;
+      --ink: #1c1712;
+      --muted: #6e655c;
+      --accent: #9a3e1c;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .wrap { max-width: 32rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+    .kicker { margin: 0; color: var(--accent); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+    h1 { margin: 0.4rem 0 0; font-family: Fraunces, Georgia, serif; font-size: 2rem; font-weight: 560; line-height: 1.05; }
+    .lead { color: var(--muted); line-height: 1.5; }
+    .card { background: var(--surface); border-radius: 1.25rem; padding: 1.1rem 1rem; }
+    .gate { min-height: 100dvh; display: flex; align-items: center; }
+    label { font-weight: 600; font-size: 0.95rem; }
+    .field { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.45rem; background: var(--bg); border-radius: 1rem; padding: 0 0.8rem; }
+    input {
+      height: 3rem; width: 100%; border: 0; background: transparent; color: var(--ink); outline: none;
+    }
+    .btn {
+      margin-top: 1rem; height: 3rem; width: 100%; border: 0; border-radius: 1rem;
+      background: var(--accent); color: var(--surface); font-weight: 650;
+    }
+    .err { color: var(--accent); font-size: 0.9rem; }
+    .hint { color: var(--muted); font-size: 0.9rem; }
+    .top { display: flex; justify-content: space-between; align-items: flex-end; gap: 0.75rem; }
+    .sync { max-width: 7rem; text-align: right; color: var(--muted); font-size: 0.75rem; line-height: 1.3; }
+    .stats { margin-top: 1.1rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; }
+    .stat { background: var(--surface); border-radius: 1rem; padding: 0.7rem 0.45rem; }
+    .stat strong { display: block; margin-top: 0.25rem; font-family: Fraunces, Georgia, serif; font-size: 1.05rem; font-variant-numeric: tabular-nums; line-height: 1.15; }
+    .stat span, .note { color: var(--muted); }
+    .stat span { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+    .stat.pay { background: var(--accent); color: var(--surface); }
+    .stat.pay span { color: rgba(251, 246, 238, 0.8); }
+    .note { margin: 0.55rem 0 0; font-size: 0.78rem; line-height: 1.4; }
+    .live {
+      margin-top: 0.9rem; background: var(--ink); color: var(--surface);
+      border-radius: 1rem; padding: 0.85rem 1rem;
+    }
+    .live p { margin: 0.2rem 0 0; }
+    .live .big { font-family: Fraunces, Georgia, serif; font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+    .live .sub { color: rgba(251, 246, 238, 0.8); font-size: 0.85rem; }
+    .nav { margin-top: 1.1rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .round {
+      width: 2.75rem; height: 2.75rem; border: 0; border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 1.3rem;
+    }
+    .round:disabled { opacity: 0.4; }
+    .nav-title { text-align: center; }
+    .nav-title p { margin: 0; font-family: Fraunces, Georgia, serif; font-size: 1.25rem; }
+    .linkish { border: 0; background: none; color: var(--accent); font-weight: 700; padding: 0; }
+    .strip { margin-top: 0.9rem; display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.25rem; }
+    .daychip {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 3.6rem; border-radius: 0.8rem; background: var(--surface); color: inherit; text-decoration: none;
+    }
+    .daychip small { color: var(--muted); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; }
+    .daychip b { font-family: Fraunces, Georgia, serif; font-size: 1.05rem; font-weight: 560; }
+    .daychip i { width: 0.35rem; height: 0.35rem; margin-top: 0.2rem; border-radius: 99px; background: transparent; display: block; }
+    .daychip.on i { background: var(--accent); }
+    .daychip.today { background: var(--accent); color: var(--surface); }
+    .daychip.today small { color: var(--surface); }
+    .daychip.today i { background: var(--surface); }
+    ul { list-style: none; margin: 0.9rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.7rem; }
+    li { scroll-margin-top: 0.8rem; }
+    .rowhead { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-weight: 650; }
+    .hoy { color: var(--accent); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    .shift { margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--bg); }
+    .shift:first-of-type { margin-top: 0.45rem; padding-top: 0; border-top: 0; }
+    .hours { margin: 0; font-family: Fraunces, Georgia, serif; font-size: 1.55rem; font-variant-numeric: tabular-nums; }
+    .meta { display: flex; justify-content: space-between; gap: 0.6rem; align-items: flex-end; margin-top: 0.2rem; }
+    .meta span { color: var(--muted); font-size: 0.85rem; }
+    .meta b { font-variant-numeric: tabular-nums; }
+    .open { color: var(--accent); }
+    .empty { margin: 0.45rem 0 0; color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div id="app" class="wrap"></div>
+  <script>
+    const DATA_URL = "https://the-pic-c437e-default-rtdb.firebaseio.com/punto_bici_ignacio.json";
+    const CLAVE = "puntobici";
+    const SESSION_KEY = "jefe_vista_ok";
+    const DAY_SHORT = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
+
+    const state = {
+      authed: false,
+      weekOffset: 0,
+      records: {},
+      liveShift: null,
+      hourlyRate: 5000,
+      error: "",
+      updatedAt: null,
+      now: Date.now()
+    };
+
+    function argentinaDateStr(date) {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Argentina/Buenos_Aires",
+        year: "numeric", month: "2-digit", day: "2-digit"
+      }).format(date || new Date());
+    }
+
+    function formatARS(amount) {
+      return new Intl.NumberFormat("es-AR", {
+        style: "currency", currency: "ARS", maximumFractionDigits: 0
+      }).format(Math.round(Number(amount) || 0));
+    }
+
+    function formatHm(mins) {
+      const m = Math.max(0, Math.round(Number(mins) || 0));
+      return Math.floor(m / 60) + " h " + String(m % 60).padStart(2, "0") + " min";
+    }
+
+    function cap(value) {
+      if (!value) return "";
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&" + "amp;")
+        .replace(/</g, "&" + "lt;")
+        .replace(/>/g, "&" + "gt;")
+        .replace(/"/g, "&" + "quot;");
+    }
+
+    function weekBounds(weekOffset) {
+      const today = argentinaDateStr();
+      const parts = today.split("-").map(Number);
+      const base = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 12, 0, 0));
+      const dow = base.getUTCDay();
+      const diffToMonday = dow === 0 ? -6 : 1 - dow;
+      base.setUTCDate(base.getUTCDate() + diffToMonday + weekOffset * 7);
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        const cur = new Date(base.getTime());
+        cur.setUTCDate(base.getUTCDate() + i);
+        const iso = cur.getUTCFullYear() + "-" + String(cur.getUTCMonth() + 1).padStart(2, "0") + "-" + String(cur.getUTCDate()).padStart(2, "0");
+        const month = cap(new Intl.DateTimeFormat("es-AR", {
+          timeZone: "America/Argentina/Buenos_Aires", month: "short"
+        }).format(cur)).replace(".", "");
+        days.push({ iso: iso, short: DAY_SHORT[i], num: String(cur.getUTCDate()), month: month });
+      }
+      return { days: days, startIso: days[0].iso, endIso: days[6].iso };
+    }
+
+    function weekTitle(days) {
+      if (days[0].month === days[6].month) return days[0].num + " al " + days[6].num + " de " + days[0].month;
+      return days[0].num + " " + days[0].month + " al " + days[6].num + " " + days[6].month;
+    }
+
+    function isLive(shift) {
+      return Boolean(shift && Number(shift.startTimestampMs) > 0 && shift.active !== false);
+    }
+
+    function renderGate() {
+      document.getElementById("app").innerHTML =
+        '<div class="gate"><div>' +
+          '<p class="kicker">Punto Bici</p>' +
+          '<h1>Registro para el jefe</h1>' +
+          '<p class="lead">Juan, acá ves solo los fichajes de Ignacio: entrada, salida, horas y lo que hay que pagar. Nada se edita desde esta pantalla.</p>' +
+          '<form id="gateForm" class="card" style="margin-top:1.4rem">' +
+            '<label for="clave">Clave</label>' +
+            '<div class="field"><input id="clave" type="password" autocomplete="current-password" placeholder="Ingresá la clave" /></div>' +
+            '<p id="gateMsg" class="hint">Solo entra quien tenga la clave.</p>' +
+            '<button class="btn" type="submit">Entrar</button>' +
+          '</form>' +
+        '</div></div>';
+      document.getElementById("gateForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const value = document.getElementById("clave").value.trim().toLowerCase();
+        if (value === CLAVE) {
+          try { sessionStorage.setItem(SESSION_KEY, "1"); } catch (err) {}
+          state.authed = true;
+          boot();
+          return;
+        }
+        const msg = document.getElementById("gateMsg");
+        msg.className = "err";
+        msg.textContent = "Clave incorrecta.";
+      });
+    }
+
+    function buildView() {
+      const week = weekBounds(state.weekOffset);
+      const records = Object.values(state.records || {}).filter(function (r) { return r && r.date; });
+      const live = isLive(state.liveShift) ? state.liveShift : null;
+      let closedMinutes = 0;
+      let closedAmount = 0;
+      let pendingAmount = 0;
+      let paidAmount = 0;
+      const days = week.days.map(function (day) {
+        const list = records.filter(function (r) { return r.date === day.iso; })
+          .sort(function (a, b) { return String(a.startTime || "").localeCompare(String(b.startTime || "")); });
+        const worked = list.filter(function (r) { return r.type !== "non_worked"; });
+        const franco = list.find(function (r) { return r.type === "non_worked"; });
+        const mins = worked.reduce(function (acc, r) { return acc + (Number(r.totalMinutes) || 0); }, 0);
+        const amount = worked.reduce(function (acc, r) { return acc + (Number(r.totalAmount) || 0); }, 0);
+        closedMinutes += mins;
+        closedAmount += amount;
+        worked.forEach(function (r) {
+          const amt = Number(r.totalAmount) || 0;
+          if (r.paidStatus === "paid") paidAmount += amt;
+          else pendingAmount += amt;
+        });
+        return {
+          iso: day.iso, short: day.short, num: day.num, month: day.month,
+          worked: worked, franco: franco, openHere: Boolean(live && live.startDateStr === day.iso)
+        };
+      });
+      let liveMinutes = 0;
+      let liveAmount = 0;
+      if (live && live.startDateStr >= week.startIso && live.startDateStr <= week.endIso) {
+        liveMinutes = Math.max(0, Math.floor((state.now - Number(live.startTimestampMs)) / 60000));
+        liveAmount = Math.round((liveMinutes / 60) * state.hourlyRate);
+      }
+      return {
+        week: week, days: days, live: live,
+        closedAmount: closedAmount, pendingAmount: pendingAmount, paidAmount: paidAmount,
+        liveMinutes: liveMinutes, liveAmount: liveAmount,
+        totalAmount: closedAmount + liveAmount,
+        totalMinutes: closedMinutes + liveMinutes
+      };
+    }
+
+    function renderApp() {
+      const view = buildView();
+      const today = argentinaDateStr();
+      const updated = state.updatedAt == null
+        ? "Leyendo fichajes…"
+        : "Actualizado hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
+      let note;
+      if (view.liveAmount > 0) {
+        note = "El total incluye el turno que sigue abierto. Cerrado: " + formatARS(view.closedAmount) + ". En curso: " + formatARS(view.liveAmount) + ".";
+        if (view.pendingAmount > 0) note += " Pendiente de pago: " + formatARS(view.pendingAmount) + ".";
+      } else if (view.pendingAmount > 0) {
+        note = "Pendiente de pago: " + formatARS(view.pendingAmount) + ". Ya pagado: " + formatARS(view.paidAmount) + ".";
+      } else if (view.closedAmount > 0) {
+        note = "Todo lo cerrado de esta semana figura como pagado.";
+      } else {
+        note = "Todavía no hay jornadas cerradas en esta semana.";
+      }
+
+      let liveHtml = "";
+      if (view.live) {
+        const elapsed = Math.max(0, Math.floor((state.now - Number(view.live.startTimestampMs)) / 60000));
+        const money = Math.round((elapsed / 60) * state.hourlyRate);
+        const fecha = String(view.live.startDateStr || "").split("-").reverse().join("/");
+        liveHtml = '<div class="live"><p class="kicker" style="color:rgba(251,246,238,.8)">Turno en curso</p>' +
+          '<p class="big">' + escapeHtml(view.live.startTimeStr || "--:--") + " → ahora</p>" +
+          '<p class="sub" id="liveLine">Abrió el ' + escapeHtml(fecha) + " · " + formatHm(elapsed) + " · alrededor de " + formatARS(money) + "</p></div>";
+      }
+
+      const chips = view.days.map(function (day) {
+        const marked = day.worked.length > 0 || day.openHere || day.franco;
+        const cls = "daychip" + (day.iso === today ? " today" : "") + (marked ? " on" : "");
+        return '<a class="' + cls + '" href="#dia-' + day.iso + '"><small>' + day.short + "</small><b>" + day.num + "</b><i></i></a>";
+      }).join("");
+
+      const list = view.days.map(function (day) {
+        let body = "";
+        if (day.worked.length === 0 && !day.franco && !day.openHere) {
+          body += '<p class="empty">Sin fichaje</p>';
+        }
+        if (day.franco && day.worked.length === 0) {
+          body += '<p class="empty" style="color:var(--ink)">Franco · ' + escapeHtml(day.franco.reason || "Día no laborable") + " · " + formatARS(0) + "</p>";
+        }
+        day.worked.forEach(function (rec) {
+          body += '<div class="shift"><p class="hours">' + escapeHtml(rec.startTime || "--:--") + ' <span style="color:var(--muted)">→</span> ' + escapeHtml(rec.endTime || "--:--") + "</p>" +
+            '<div class="meta"><span>' + escapeHtml(rec.durationLabel || formatHm(rec.totalMinutes)) +
+            (Number(rec.breakMinutes) > 0 ? " · descanso " + rec.breakMinutes + " min" : "") +
+            " · " + (rec.paidStatus === "paid" ? "Pagado" : "Pendiente") +
+            '</span><b>' + formatARS(rec.totalAmount) + "</b></div></div>";
+        });
+        if (day.openHere && view.live) {
+          body += '<div class="shift"><p class="hours">' + escapeHtml(view.live.startTimeStr || "--:--") + ' <span style="color:var(--muted)">→</span> ahora</p>' +
+            '<div class="meta"><span class="open" id="liveDayLine">En curso · ' + formatHm(view.liveMinutes) + "</span><b id=\"liveDayPay\">" + formatARS(view.liveAmount) + "</b></div></div>";
+        }
+        return '<li class="card" id="dia-' + day.iso + '"><div class="rowhead"><p>' + day.short + " " + day.num + " " + day.month + "</p>" +
+          (day.iso === today ? '<span class="hoy">Hoy</span>' : "") + "</div>" + body + "</li>";
+      }).join("");
+
+      const back = state.weekOffset !== 0
+        ? '<button type="button" class="linkish" id="btnThisWeek">Volver a esta semana</button>'
+        : '<p class="hint" style="margin:0">Esta semana</p>';
+
+      document.getElementById("app").innerHTML =
+        '<header class="top"><div><p class="kicker">Punto Bici · Juan</p><h1>Fichajes de Ignacio</h1></div><p class="sync" id="syncLabel">' + updated + "</p></header>" +
+        '<section class="stats">' +
+          '<div class="stat"><span>Valor hora</span><strong>' + formatARS(state.hourlyRate) + "</strong></div>" +
+          '<div class="stat"><span>Horas semana</span><strong id="statHours">' + formatHm(view.totalMinutes) + "</strong></div>" +
+          '<div class="stat pay"><span>A pagar</span><strong id="statPay">' + formatARS(view.totalAmount) + "</strong></div>" +
+        "</section>" +
+        '<p class="note" id="weekNote">' + note + "</p>" +
+        (state.error ? '<p class="err">' + escapeHtml(state.error) + "</p>" : "") +
+        liveHtml +
+        '<div class="nav"><button type="button" class="round" id="btnPrev" aria-label="Semana anterior">‹</button>' +
+          '<div class="nav-title"><p>' + weekTitle(view.week.days) + "</p>" + back + "</div>" +
+          '<button type="button" class="round" id="btnNext" aria-label="Semana siguiente"' + (state.weekOffset >= 0 ? " disabled" : "") + ">›</button></div>" +
+        '<div class="strip">' + chips + "</div><ul>" + list + "</ul>";
+
+      document.getElementById("btnPrev").onclick = function () { state.weekOffset -= 1; renderApp(); };
+      document.getElementById("btnNext").onclick = function () {
+        state.weekOffset = Math.min(0, state.weekOffset + 1);
+        renderApp();
+      };
+      const backBtn = document.getElementById("btnThisWeek");
+      if (backBtn) backBtn.onclick = function () { state.weekOffset = 0; renderApp(); };
+    }
+
+    let lastSnapshot = "";
+
+    async function loadData() {
+      try {
+        const res = await fetch(DATA_URL);
+        if (!res.ok) throw new Error("bad");
+        const data = await res.json();
+        state.records = data && data.records && typeof data.records === "object" ? data.records : {};
+        state.liveShift = data && data.live_shift ? data.live_shift : null;
+        state.hourlyRate = Number(data && data.settings && data.settings.hourlyRate) || 5000;
+        state.error = "";
+        state.updatedAt = Date.now();
+        const snap = JSON.stringify({
+          records: state.records,
+          live: state.liveShift,
+          rate: state.hourlyRate
+        });
+        const changed = snap !== lastSnapshot;
+        lastSnapshot = snap;
+        if (state.authed && (changed || !document.getElementById("statHours"))) renderApp();
+      } catch (e) {
+        state.error = "No se pudieron leer los fichajes. Reintentá en un momento.";
+        if (state.authed) renderApp();
+      }
+    }
+
+    function boot() {
+      renderApp();
+      loadData();
+    }
+
+    function tickLive() {
+      state.now = Date.now();
+      if (!state.authed) return;
+      const view = buildView();
+      const hours = document.getElementById("statHours");
+      const pay = document.getElementById("statPay");
+      const sync = document.getElementById("syncLabel");
+      const note = document.getElementById("weekNote");
+      if (hours) hours.textContent = formatHm(view.totalMinutes);
+      if (pay) pay.textContent = formatARS(view.totalAmount);
+      if (sync && state.updatedAt) {
+        sync.textContent = "Actualizado hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
+      }
+      if (note) {
+        if (view.liveAmount > 0) {
+          note.textContent = "El total incluye el turno que sigue abierto. Cerrado: " + formatARS(view.closedAmount) + ". En curso: " + formatARS(view.liveAmount) + "." +
+            (view.pendingAmount > 0 ? " Pendiente de pago: " + formatARS(view.pendingAmount) + "." : "");
+        }
+      }
+      const liveLine = document.getElementById("liveLine");
+      if (liveLine && view.live) {
+        const elapsed = Math.max(0, Math.floor((state.now - Number(view.live.startTimestampMs)) / 60000));
+        const money = Math.round((elapsed / 60) * state.hourlyRate);
+        const fecha = String(view.live.startDateStr || "").split("-").reverse().join("/");
+        liveLine.textContent = "Abrió el " + fecha + " · " + formatHm(elapsed) + " · alrededor de " + formatARS(money);
+      }
+      const dayLine = document.getElementById("liveDayLine");
+      const dayPay = document.getElementById("liveDayPay");
+      if (dayLine) dayLine.textContent = "En curso · " + formatHm(view.liveMinutes);
+      if (dayPay) dayPay.textContent = formatARS(view.liveAmount);
+    }
+
+    try { state.authed = sessionStorage.getItem(SESSION_KEY) === "1"; } catch (e) { state.authed = false; }
+    if (state.authed) boot();
+    else renderGate();
+    setInterval(tickLive, 1000);
+    setInterval(function () {
+      if (state.authed) loadData();
+    }, 12000);
+  </script>
+</body>
+</html>
