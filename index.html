@@ -9,11 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,520;9..144,620&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #eef2f1;
-      --surface: #fffcf8;
-      --ink: #1b2a33;
-      --muted: #6d7874;
-      --accent: #2c6b5c;
+      --bg: #f3efe6;
+      --surface: #fffdf8;
+      --ink: #24302a;
+      --muted: #6d675f;
+      --accent: #3d6b52;
     }
     * { box-sizing: border-box; }
     html, body {
@@ -183,7 +183,8 @@
         });
         return {
           iso: day.iso, short: day.short, num: day.num, month: day.month,
-          worked: worked, franco: franco, openHere: Boolean(live && live.startDateStr === day.iso)
+          worked: worked, franco: franco, mins: mins,
+          openHere: Boolean(live && live.startDateStr === day.iso)
         };
       });
       let liveMinutes = 0;
@@ -192,12 +193,34 @@
         liveMinutes = Math.max(0, Math.floor((state.now - Number(live.startTimestampMs)) / 60000));
         liveAmount = Math.round((liveMinutes / 60) * state.hourlyRate);
       }
+      let daysThere = 0;
+      let earliest = null;
+      let longestMinutes = 0;
+      let longestStart = null;
+      let longestEnd = null;
+      days.forEach(function (day) {
+        const total = day.mins + (day.openHere ? liveMinutes : 0);
+        if (total > 0) daysThere += 1;
+        day.worked.forEach(function (rec) {
+          if (rec.startTime && (!earliest || rec.startTime < earliest)) earliest = rec.startTime;
+        });
+        if (day.openHere && live && live.startTimeStr && (!earliest || live.startTimeStr < earliest)) earliest = live.startTimeStr;
+        if (total > longestMinutes) {
+          longestMinutes = total;
+          const first = day.worked[0];
+          const last = day.worked[day.worked.length - 1];
+          longestStart = (first && first.startTime) || (day.openHere && live ? live.startTimeStr : null);
+          longestEnd = day.openHere ? null : (last && last.endTime) || null;
+        }
+      });
       return {
         week: week, days: days, live: live,
         closedAmount: closedAmount, pendingAmount: pendingAmount, paidAmount: paidAmount,
         liveMinutes: liveMinutes, liveAmount: liveAmount,
         totalAmount: closedAmount + liveAmount,
-        totalMinutes: closedMinutes + liveMinutes
+        totalMinutes: closedMinutes + liveMinutes,
+        daysThere: daysThere, earliest: earliest,
+        longestMinutes: longestMinutes, longestStart: longestStart, longestEnd: longestEnd
       };
     }
 
@@ -210,7 +233,7 @@
 
     function weekSentence(view) {
       if (view.totalMinutes <= 0) return "En esta semana todavía no hay horarios.";
-      let note = "Esta semana estuvo " + formatHm(view.totalMinutes) + " en el local. Con la hora convenida, la cuenta da " + formatARS(view.totalAmount) + ".";
+      let note = "Ese tiempo ya pasó en Punto Bici. A la hora convenida, lo que ya dio queda en " + formatARS(view.totalAmount) + ".";
       if (view.liveAmount > 0) {
         note += " " + formatARS(view.closedAmount) + " es de días ya cerrados y " + formatARS(view.liveAmount) + " es de hoy, que sigue abierto.";
       }
@@ -218,6 +241,18 @@
       const closedLeft = Math.max(0, view.closedAmount - view.paidAmount);
       if (view.paidAmount > 0 && closedLeft > 0) note += " El resto de los días cerrados suma " + formatARS(closedLeft) + ".";
       return note;
+    }
+
+    function weightLine(view) {
+      if (view.totalMinutes <= 0) return "";
+      let line = "Estuvo " + view.daysThere + (view.daysThere === 1 ? " día." : " días.");
+      if (view.earliest) line += " Llegó a las " + view.earliest + ".";
+      if (view.longestMinutes > 0) {
+        line += view.longestEnd
+          ? " El tramo más largo fueron " + formatHm(view.longestMinutes) + ", de " + view.longestStart + " a " + view.longestEnd + "."
+          : " El tramo más largo va en " + formatHm(view.longestMinutes) + " y todavía no cerró.";
+      }
+      return line;
     }
 
     function renderApp() {
@@ -232,10 +267,9 @@
       if (view.live) {
         const elapsed = Math.max(0, Math.floor((state.now - Number(view.live.startTimestampMs)) / 60000));
         const money = Math.round((elapsed / 60) * state.hourlyRate);
-        const fecha = String(view.live.startDateStr || "").split("-").reverse().join("/");
-        liveHtml = '<div class="live"><p class="kicker">Hoy está en el local</p>' +
-          '<p class="big">Llegó a las ' + escapeHtml(view.live.startTimeStr || "--:--") + "</p>" +
-          '<p class="sub" id="liveStay">Sigue ahí, desde el ' + escapeHtml(fecha) + ". Van " + formatHm(elapsed) + ".</p>" +
+        liveHtml = '<div class="live"><p class="kicker">Hoy todavía está</p>' +
+          '<p class="big">Llegó a las ' + escapeHtml(view.live.startTimeStr || "--:--") + " y no se fue</p>" +
+          '<p class="sub" id="liveStay">Van ' + formatHm(elapsed) + " de este día. El tiempo sigue corriendo.</p>" +
           '<p class="formula" id="liveFormula">' + elapsed + " min × " + escapeHtml(formatARS(state.hourlyRate)) + " / 60</p>" +
           '<p class="sub">La cuenta de hoy, por ahora, <span id="livePay">' + quietMoney(money) + "</span></p></div>";
       }
@@ -257,17 +291,17 @@
         day.worked.forEach(function (rec) {
           const mins = Number(rec.totalMinutes) || 0;
           const rate = Number(rec.hourlyRate) || state.hourlyRate;
-          body += '<div class="shift"><p class="arrived">Llegó ' + escapeHtml(rec.startTime || "--:--") + "</p>" +
-            '<p class="left">Se fue ' + escapeHtml(rec.endTime || "--:--") + "</p>" +
-            '<p class="stay">' + escapeHtml(rec.durationLabel || formatHm(mins)) + " en el local" +
+          body += '<div class="shift"><p class="arrived">Estuvo desde las ' + escapeHtml(rec.startTime || "--:--") + "</p>" +
+            '<p class="left">Hasta las ' + escapeHtml(rec.endTime || "--:--") + "</p>" +
+            '<p class="stay">' + escapeHtml(rec.durationLabel || formatHm(mins)) + " de su día" +
             (Number(rec.breakMinutes) > 0 ? " · " + rec.breakMinutes + " min de descanso" : "") + "</p>" +
             '<p class="formula">' + mins + " min × " + escapeHtml(formatARS(rate)) + " / 60</p>" +
             '<p class="line"><span>' + (rec.paidStatus === "paid" ? "Ya liquidado" : "Cuenta del día") + "</span>" + quietMoney(rec.totalAmount) + "</p></div>";
         });
         if (day.openHere && view.live) {
-          body += '<div class="shift"><p class="arrived">Llegó ' + escapeHtml(view.live.startTimeStr || "--:--") + "</p>" +
-            '<p class="left open">Sigue en el local</p>' +
-            '<p class="stay" id="liveDayStay">' + formatHm(view.liveMinutes) + ", y sigue</p>" +
+          body += '<div class="shift"><p class="arrived">Llegó a las ' + escapeHtml(view.live.startTimeStr || "--:--") + "</p>" +
+            '<p class="left open">Y todavía no se fue</p>' +
+            '<p class="stay" id="liveDayStay">' + formatHm(view.liveMinutes) + " de este día, y sigue</p>" +
             '<p class="formula" id="liveDayFormula">' + view.liveMinutes + " min × " + escapeHtml(formatARS(state.hourlyRate)) + " / 60</p>" +
             '<p class="line"><span>Cuenta de hoy, por ahora</span><span id="liveDayPay">' + quietMoney(view.liveAmount) + "</span></p></div>";
         }
@@ -281,13 +315,15 @@
 
       document.getElementById("app").innerHTML =
         '<header><p class="kicker">Punto Bici</p><h1>La semana de Ignacio</h1>' +
-        '<p class="lead ink">Juan, acá está cada horario: a qué hora llegó, a qué hora se fue y cuánto tiempo estuvo en el local.</p>' +
-        '<p class="lead">La hora convenida son ' + formatARS(state.hourlyRate) + '. La cuenta de cada día sale sola de esos minutos por esa hora. No hay otro número.</p>' +
+        '<p class="lead ink">Juan, estas son las horas que ya dejó en el local. Cada vez que llegó y cada vez que se quedó.</p>' +
+        '<p class="lead">La hora convenida son ' + formatARS(state.hourlyRate) + '. Abajo la cuenta solo traduce ese tiempo, minuto por minuto.</p>' +
         '<p class="sync" id="syncLabel" style="margin-top:0.7rem">' + updated + "</p></header>" +
         liveHtml +
         '<section class="hero">' +
-          '<p class="eyebrow">En el local, esta semana</p>' +
+          '<p class="eyebrow">Tiempo que ya dio</p>' +
           '<p class="hours-big" id="weekHours">' + formatHm(view.totalMinutes) + "</p>" +
+          '<p class="stay">en el local, esta semana</p>' +
+          (view.totalMinutes > 0 ? '<p class="lead" id="weightLine">' + escapeHtml(weightLine(view)) + "</p>" : "") +
           '<div class="split"><div><p class="lbl">Hora convenida</p><p>' + quietMoney(state.hourlyRate) + "</p></div>" +
           '<div><p class="lbl">Cuenta de esas horas</p><p id="weekPay">' + quietMoney(view.totalAmount) + "</p></div></div>" +
         "</section>" +
@@ -297,7 +333,10 @@
         '<div class="nav"><button type="button" class="round" id="btnPrev" aria-label="Semana anterior">‹</button>' +
           '<div class="nav-title"><p>' + weekTitle(view.week.days) + "</p>" + back + "</div>" +
           '<button type="button" class="round" id="btnNext" aria-label="Semana siguiente"' + (state.weekOffset >= 0 ? " disabled" : "") + ">›</button></div>" +
-        '<div class="strip">' + chips + "</div><ul>" + list + "</ul>";
+        '<div class="strip">' + chips + "</div><ul>" + list + "</ul>" +
+        (view.totalMinutes > 0
+          ? '<p class="note">Ignacio ya estuvo esas horas. La cuenta no pide nada nuevo: nombra el tiempo que ya pasó, a la hora que habían convenido.</p>'
+          : "");
 
       document.getElementById("btnPrev").onclick = function () { state.weekOffset -= 1; renderApp(); };
       document.getElementById("btnNext").onclick = function () {
@@ -356,21 +395,22 @@
         sync.textContent = "Se actualizó solo · hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
       }
       if (note) note.textContent = weekSentence(view);
+      const weight = document.getElementById("weightLine");
+      if (weight) weight.textContent = weightLine(view);
       if (view.live) {
         const elapsed = Math.max(0, Math.floor((state.now - Number(view.live.startTimestampMs)) / 60000));
         const money = Math.round((elapsed / 60) * state.hourlyRate);
-        const fecha = String(view.live.startDateStr || "").split("-").reverse().join("/");
         const stay = document.getElementById("liveStay");
         const formula = document.getElementById("liveFormula");
         const livePay = document.getElementById("livePay");
-        if (stay) stay.textContent = "Sigue ahí, desde el " + fecha + ". Van " + formatHm(elapsed) + ".";
+        if (stay) stay.textContent = "Van " + formatHm(elapsed) + " de este día. El tiempo sigue corriendo.";
         if (formula) formula.textContent = elapsed + " min × " + formatARS(state.hourlyRate) + " / 60";
         if (livePay) livePay.innerHTML = quietMoney(money);
       }
       const dayStay = document.getElementById("liveDayStay");
       const dayFormula = document.getElementById("liveDayFormula");
       const dayPay = document.getElementById("liveDayPay");
-      if (dayStay) dayStay.textContent = formatHm(view.liveMinutes) + ", y sigue";
+      if (dayStay) dayStay.textContent = formatHm(view.liveMinutes) + " de este día, y sigue";
       if (dayFormula) dayFormula.textContent = view.liveMinutes + " min × " + formatARS(state.hourlyRate) + " / 60";
       if (dayPay) dayPay.innerHTML = quietMoney(view.liveAmount);
     }
