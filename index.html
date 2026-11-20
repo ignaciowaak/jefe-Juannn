@@ -328,7 +328,6 @@
         "</section>" +
         '<p class="note" id="weekNote">' + note + "</p>" +
         (state.error ? '<p class="err">' + escapeHtml(state.error) + "</p>" : "") +
-        liveHtml +
         '<div class="nav"><button type="button" class="round" id="btnPrev" aria-label="Semana anterior">‹</button>' +
           '<div class="nav-title"><p>' + weekTitle(view.week.days) + "</p>" + back + "</div>" +
           '<button type="button" class="round" id="btnNext" aria-label="Semana siguiente"' + (state.weekOffset >= 0 ? " disabled" : "") + ">›</button></div>" +
