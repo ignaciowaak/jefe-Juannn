@@ -216,7 +216,7 @@
       }
       if (view.paidAmount > 0) note += " Ya quedó liquidado " + formatARS(view.paidAmount) + ".";
       const closedLeft = Math.max(0, view.closedAmount - view.paidAmount);
-      if (closedLeft > 0) note += " El resto de los días cerrados suma " + formatARS(closedLeft) + ".";
+      if (view.paidAmount > 0 && closedLeft > 0) note += " El resto de los días cerrados suma " + formatARS(closedLeft) + ".";
       return note;
     }
 
