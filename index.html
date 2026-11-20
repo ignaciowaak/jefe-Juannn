@@ -213,6 +213,24 @@
           longestEnd = day.openHere ? null : (last && last.endTime) || null;
         }
       });
+      let monthMinutes = 0;
+      let monthAmount = 0;
+      const todayIso = argentinaDateStr();
+      const monthStart = todayIso.slice(0, 8) + "01";
+      records.forEach(function (rec) {
+        if (!rec.date || rec.date < monthStart || rec.date > todayIso || rec.type === "non_worked") return;
+        monthMinutes += Number(rec.totalMinutes) || 0;
+        monthAmount += Number(rec.totalAmount) || 0;
+      });
+      if (live && live.startDateStr && live.startDateStr >= monthStart && live.startDateStr <= todayIso) {
+        const openMins = Math.max(0, Math.floor((state.now - Number(live.startTimestampMs)) / 60000));
+        monthMinutes += openMins;
+        monthAmount += Math.round((openMins / 60) * state.hourlyRate);
+      }
+      const monthName = new Intl.DateTimeFormat("es-AR", {
+        timeZone: "America/Argentina/Buenos_Aires",
+        month: "long"
+      }).format(new Date());
       return {
         week: week, days: days, live: live,
         closedAmount: closedAmount, pendingAmount: pendingAmount, paidAmount: paidAmount,
@@ -220,7 +238,8 @@
         totalAmount: closedAmount + liveAmount,
         totalMinutes: closedMinutes + liveMinutes,
         daysThere: daysThere, earliest: earliest,
-        longestMinutes: longestMinutes, longestStart: longestStart, longestEnd: longestEnd
+        longestMinutes: longestMinutes, longestStart: longestStart, longestEnd: longestEnd,
+        monthName: monthName, monthMinutes: monthMinutes, monthAmount: monthAmount
       };
     }
 
@@ -232,15 +251,16 @@
     }
 
     function weekSentence(view) {
-      if (view.totalMinutes <= 0) return "Esta semana no tiene horarios.";
-      let note = "Total " + formatHm(view.totalMinutes) + " · " + formatARS(view.totalAmount) + ".";
-      if (view.liveAmount > 0) {
-        note += " Cerrado " + formatARS(view.closedAmount) + ". En curso " + formatARS(view.liveAmount) + ".";
-      }
-      if (view.paidAmount > 0) note += " Liquidado " + formatARS(view.paidAmount) + ".";
+      let note = "";
+      if (view.liveAmount > 0) note += "Cerrado " + formatARS(view.closedAmount) + ". En curso " + formatARS(view.liveAmount) + ".";
+      if (view.paidAmount > 0) note += (note ? " " : "") + "Liquidado " + formatARS(view.paidAmount) + ".";
       const closedLeft = Math.max(0, view.closedAmount - view.paidAmount);
       if (view.paidAmount > 0 && closedLeft > 0) note += " Resto " + formatARS(closedLeft) + ".";
       return note;
+    }
+
+    function monthSentence(view) {
+      return view.monthName + ", hasta hoy: " + formatHm(view.monthMinutes) + " · " + formatARS(view.monthAmount);
     }
 
     function weightLine(view) {
@@ -300,10 +320,7 @@
         });
         if (day.openHere && view.live) {
           body += '<div class="shift"><p class="eyebrow">Entrada</p><p class="arrived">' + escapeHtml(view.live.startTimeStr || "--:--") + "</p>" +
-            '<p class="eyebrow open" style="margin-top:0.55rem">Salida</p><p class="arrived open">En curso</p>' +
-            '<p class="stay" id="liveDayStay">' + formatHm(view.liveMinutes) + "</p>" +
-            '<p class="formula" id="liveDayFormula">' + view.liveMinutes + " min × " + escapeHtml(formatARS(state.hourlyRate)) + " / 60</p>" +
-            '<p class="line"><span>En curso</span><span id="liveDayPay">' + quietMoney(view.liveAmount) + "</span></p></div>";
+            '<p class="stay open">En curso</p></div>';
         }
         return '<li class="card" id="dia-' + day.iso + '"><div class="rowhead"><p>' + day.short + " " + day.num + " " + day.month + "</p>" +
           (day.iso === today ? '<span class="hoy">Hoy</span>' : "") + "</div>" + body + "</li>";
@@ -320,13 +337,14 @@
         '<p class="sync" id="syncLabel" style="margin-top:0.7rem">' + updated + "</p></header>" +
         liveHtml +
         '<section class="hero">' +
-          '<p class="eyebrow">Horas de la semana</p>' +
+          '<p class="eyebrow" id="weekRange">' + weekTitle(view.week.days) + "</p>" +
           '<p class="hours-big" id="weekHours">' + formatHm(view.totalMinutes) + "</p>" +
           (view.totalMinutes > 0 ? '<p class="lead" id="weightLine">' + escapeHtml(weightLine(view)) + "</p>" : "") +
           '<div class="split"><div><p class="lbl">Hora</p><p>' + quietMoney(state.hourlyRate) + "</p></div>" +
           '<div><p class="lbl">Total</p><p id="weekPay">' + quietMoney(view.totalAmount) + "</p></div></div>" +
         "</section>" +
-        '<p class="note" id="weekNote">' + note + "</p>" +
+        '<p class="note" id="monthLine">' + escapeHtml(monthSentence(view)) + "</p>" +
+        (note ? '<p class="note" id="weekNote">' + note + "</p>" : "") +
         (state.error ? '<p class="err">' + escapeHtml(state.error) + "</p>" : "") +
         '<div class="nav"><button type="button" class="round" id="btnPrev" aria-label="Semana anterior">‹</button>' +
           '<div class="nav-title"><p>' + weekTitle(view.week.days) + "</p>" + back + "</div>" +
@@ -392,6 +410,8 @@
       if (note) note.textContent = weekSentence(view);
       const weight = document.getElementById("weightLine");
       if (weight) weight.textContent = weightLine(view);
+      const month = document.getElementById("monthLine");
+      if (month) month.textContent = monthSentence(view);
       if (view.live) {
         const elapsed = Math.max(0, Math.floor((state.now - Number(view.live.startTimestampMs)) / 60000));
         const money = Math.round((elapsed / 60) * state.hourlyRate);
@@ -402,12 +422,6 @@
         if (formula) formula.textContent = elapsed + " min × " + formatARS(state.hourlyRate) + " / 60";
         if (livePay) livePay.innerHTML = quietMoney(money);
       }
-      const dayStay = document.getElementById("liveDayStay");
-      const dayFormula = document.getElementById("liveDayFormula");
-      const dayPay = document.getElementById("liveDayPay");
-      if (dayStay) dayStay.textContent = formatHm(view.liveMinutes);
-      if (dayFormula) dayFormula.textContent = view.liveMinutes + " min × " + formatARS(state.hourlyRate) + " / 60";
-      if (dayPay) dayPay.innerHTML = quietMoney(view.liveAmount);
     }
 
     boot();
