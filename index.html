@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Registro · Punto Bici</title>
+  <title>Horarios de Ignacio · Punto Bici</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,680&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -97,12 +97,9 @@
   <div id="app" class="wrap"></div>
   <script>
     const DATA_URL = "https://the-pic-c437e-default-rtdb.firebaseio.com/punto_bici_ignacio.json";
-    const CLAVE = "puntobici";
-    const SESSION_KEY = "jefe_vista_ok";
     const DAY_SHORT = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
 
     const state = {
-      authed: false,
       weekOffset: 0,
       records: {},
       liveShift: null,
@@ -172,34 +169,6 @@
       return Boolean(shift && Number(shift.startTimestampMs) > 0 && shift.active !== false);
     }
 
-    function renderGate() {
-      document.getElementById("app").innerHTML =
-        '<div class="gate"><div>' +
-          '<p class="kicker">Punto Bici</p>' +
-          '<h1>Registro para el jefe</h1>' +
-          '<p class="lead">Juan, acá ves solo los fichajes de Ignacio: entrada, salida, horas y lo que hay que pagar. Nada se edita desde esta pantalla.</p>' +
-          '<form id="gateForm" class="card" style="margin-top:1.4rem">' +
-            '<label for="clave">Clave</label>' +
-            '<div class="field"><input id="clave" type="password" autocomplete="current-password" placeholder="Ingresá la clave" /></div>' +
-            '<p id="gateMsg" class="hint">Solo entra quien tenga la clave.</p>' +
-            '<button class="btn" type="submit">Entrar</button>' +
-          '</form>' +
-        '</div></div>';
-      document.getElementById("gateForm").addEventListener("submit", function (e) {
-        e.preventDefault();
-        const value = document.getElementById("clave").value.trim().toLowerCase();
-        if (value === CLAVE) {
-          try { sessionStorage.setItem(SESSION_KEY, "1"); } catch (err) {}
-          state.authed = true;
-          boot();
-          return;
-        }
-        const msg = document.getElementById("gateMsg");
-        msg.className = "err";
-        msg.textContent = "Clave incorrecta.";
-      });
-    }
-
     function buildView() {
       const week = weekBounds(state.weekOffset);
       const records = Object.values(state.records || {}).filter(function (r) { return r && r.date; });
@@ -246,28 +215,26 @@
       const view = buildView();
       const today = argentinaDateStr();
       const updated = state.updatedAt == null
-        ? "Leyendo fichajes…"
-        : "Actualizado hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
+        ? "Actualizando horarios…"
+        : "Recién actualizado · hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
       let note;
       if (view.liveAmount > 0) {
-        note = "El total incluye el turno que sigue abierto. Cerrado: " + formatARS(view.closedAmount) + ". En curso: " + formatARS(view.liveAmount) + ".";
-        if (view.pendingAmount > 0) note += " Pendiente de pago: " + formatARS(view.pendingAmount) + ".";
-      } else if (view.pendingAmount > 0) {
-        note = "Pendiente de pago: " + formatARS(view.pendingAmount) + ". Ya pagado: " + formatARS(view.paidAmount) + ".";
-      } else if (view.closedAmount > 0) {
-        note = "Todo lo cerrado de esta semana figura como pagado.";
+        note = "Ignacio está trabajando. Esta semana lleva " + formatHm(view.totalMinutes) + ". A " + formatARS(state.hourlyRate) + " la hora, van " + formatARS(view.totalAmount) + ": " + formatARS(view.closedAmount) + " de jornadas terminadas y " + formatARS(view.liveAmount) + " del turno de ahora.";
+      } else if (view.totalAmount > 0) {
+        note = "Esta semana Ignacio hizo " + formatHm(view.totalMinutes) + ". A " + formatARS(state.hourlyRate) + " la hora, le corresponden " + formatARS(view.totalAmount) + ".";
       } else {
-        note = "Todavía no hay jornadas cerradas en esta semana.";
+        note = "En esta semana todavía no hay horarios cargados.";
       }
+      if (view.paidAmount > 0) note += " Ya está pago " + formatARS(view.paidAmount) + ".";
 
       let liveHtml = "";
       if (view.live) {
         const elapsed = Math.max(0, Math.floor((state.now - Number(view.live.startTimestampMs)) / 60000));
         const money = Math.round((elapsed / 60) * state.hourlyRate);
         const fecha = String(view.live.startDateStr || "").split("-").reverse().join("/");
-        liveHtml = '<div class="live"><p class="kicker" style="color:rgba(251,246,238,.8)">Turno en curso</p>' +
-          '<p class="big">' + escapeHtml(view.live.startTimeStr || "--:--") + " → ahora</p>" +
-          '<p class="sub" id="liveLine">Abrió el ' + escapeHtml(fecha) + " · " + formatHm(elapsed) + " · alrededor de " + formatARS(money) + "</p></div>";
+        liveHtml = '<div class="live"><p class="kicker" style="color:rgba(251,246,238,.8)">Ignacio está trabajando</p>' +
+          '<p class="big">Entró a las ' + escapeHtml(view.live.startTimeStr || "--:--") + "</p>" +
+          '<p class="sub" id="liveLine">Sigue en el local desde el ' + escapeHtml(fecha) + ". Lleva " + formatHm(elapsed) + ". A " + formatARS(state.hourlyRate) + " la hora, este turno va en " + formatARS(money) + ".</p></div>";
       }
 
       const chips = view.days.map(function (day) {
@@ -279,21 +246,21 @@
       const list = view.days.map(function (day) {
         let body = "";
         if (day.worked.length === 0 && !day.franco && !day.openHere) {
-          body += '<p class="empty">Sin fichaje</p>';
+          body += '<p class="empty">No trabajó</p>';
         }
         if (day.franco && day.worked.length === 0) {
-          body += '<p class="empty" style="color:var(--ink)">Franco · ' + escapeHtml(day.franco.reason || "Día no laborable") + " · " + formatARS(0) + "</p>";
+          body += '<p class="empty" style="color:var(--ink)">No trabajó · ' + escapeHtml(day.franco.reason || "franco") + "</p>";
         }
         day.worked.forEach(function (rec) {
-          body += '<div class="shift"><p class="hours">' + escapeHtml(rec.startTime || "--:--") + ' <span style="color:var(--muted)">→</span> ' + escapeHtml(rec.endTime || "--:--") + "</p>" +
+          body += '<div class="shift"><p class="hours">Entró ' + escapeHtml(rec.startTime || "--:--") + ' <span style="color:var(--muted)">· salió ' + escapeHtml(rec.endTime || "--:--") + "</span></p>" +
             '<div class="meta"><span>' + escapeHtml(rec.durationLabel || formatHm(rec.totalMinutes)) +
             (Number(rec.breakMinutes) > 0 ? " · descanso " + rec.breakMinutes + " min" : "") +
-            " · " + (rec.paidStatus === "paid" ? "Pagado" : "Pendiente") +
+            " · " + (rec.paidStatus === "paid" ? "Ya pago" : "A pagar") +
             '</span><b>' + formatARS(rec.totalAmount) + "</b></div></div>";
         });
         if (day.openHere && view.live) {
-          body += '<div class="shift"><p class="hours">' + escapeHtml(view.live.startTimeStr || "--:--") + ' <span style="color:var(--muted)">→</span> ahora</p>' +
-            '<div class="meta"><span class="open" id="liveDayLine">En curso · ' + formatHm(view.liveMinutes) + "</span><b id=\"liveDayPay\">" + formatARS(view.liveAmount) + "</b></div></div>";
+          body += '<div class="shift"><p class="hours">Entró ' + escapeHtml(view.live.startTimeStr || "--:--") + ' <span style="color:var(--muted)">· sigue ahora</span></p>' +
+            '<div class="meta"><span class="open" id="liveDayLine">Trabajando · ' + formatHm(view.liveMinutes) + "</span><b id=\"liveDayPay\">" + formatARS(view.liveAmount) + "</b></div></div>";
         }
         return '<li class="card" id="dia-' + day.iso + '"><div class="rowhead"><p>' + day.short + " " + day.num + " " + day.month + "</p>" +
           (day.iso === today ? '<span class="hoy">Hoy</span>' : "") + "</div>" + body + "</li>";
@@ -304,11 +271,14 @@
         : '<p class="hint" style="margin:0">Esta semana</p>';
 
       document.getElementById("app").innerHTML =
-        '<header class="top"><div><p class="kicker">Punto Bici · Juan</p><h1>Fichajes de Ignacio</h1></div><p class="sync" id="syncLabel">' + updated + "</p></header>" +
+        '<header><p class="kicker">Punto Bici</p><h1>Horarios de Ignacio</h1>' +
+        '<p class="lead" style="color:var(--ink)">Juan, acá podés ver los horarios de entrada y de salida de Ignacio.</p>' +
+        '<p class="lead">La hora se paga a ' + formatARS(state.hourlyRate) + ' pesos argentinos. En cada día está a qué hora entró, a qué hora salió, cuántas horas hizo y cuánto le corresponde por esa jornada.</p>' +
+        '<p class="sync" id="syncLabel" style="max-width:none;text-align:left;margin-top:0.6rem">' + updated + "</p></header>" +
         '<section class="stats">' +
-          '<div class="stat"><span>Valor hora</span><strong>' + formatARS(state.hourlyRate) + "</strong></div>" +
-          '<div class="stat"><span>Horas semana</span><strong id="statHours">' + formatHm(view.totalMinutes) + "</strong></div>" +
-          '<div class="stat pay"><span>A pagar</span><strong id="statPay">' + formatARS(view.totalAmount) + "</strong></div>" +
+          '<div class="stat"><span>La hora</span><strong>' + formatARS(state.hourlyRate) + "</strong></div>" +
+          '<div class="stat"><span>Esta semana</span><strong id="statHours">' + formatHm(view.totalMinutes) + "</strong></div>" +
+          '<div class="stat pay"><span>Le corresponde</span><strong id="statPay">' + formatARS(view.totalAmount) + "</strong></div>" +
         "</section>" +
         '<p class="note" id="weekNote">' + note + "</p>" +
         (state.error ? '<p class="err">' + escapeHtml(state.error) + "</p>" : "") +
@@ -346,10 +316,14 @@
         });
         const changed = snap !== lastSnapshot;
         lastSnapshot = snap;
-        if (state.authed && (changed || !document.getElementById("statHours"))) renderApp();
+        if (changed || !document.getElementById("statHours")) renderApp();
       } catch (e) {
-        state.error = "No se pudieron leer los fichajes. Reintentá en un momento.";
-        if (state.authed) renderApp();
+        state.error = "No se pudieron leer los horarios. Reintentá en un momento.";
+        if (!document.getElementById("statHours")) renderApp();
+        else {
+          const err = document.querySelector(".err");
+          if (!err) renderApp();
+        }
       }
     }
 
@@ -360,7 +334,6 @@
 
     function tickLive() {
       state.now = Date.now();
-      if (!state.authed) return;
       const view = buildView();
       const hours = document.getElementById("statHours");
       const pay = document.getElementById("statPay");
@@ -369,12 +342,12 @@
       if (hours) hours.textContent = formatHm(view.totalMinutes);
       if (pay) pay.textContent = formatARS(view.totalAmount);
       if (sync && state.updatedAt) {
-        sync.textContent = "Actualizado hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
+        sync.textContent = "Recién actualizado · hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
       }
       if (note) {
         if (view.liveAmount > 0) {
-          note.textContent = "El total incluye el turno que sigue abierto. Cerrado: " + formatARS(view.closedAmount) + ". En curso: " + formatARS(view.liveAmount) + "." +
-            (view.pendingAmount > 0 ? " Pendiente de pago: " + formatARS(view.pendingAmount) + "." : "");
+          note.textContent = "Ignacio está trabajando. Esta semana lleva " + formatHm(view.totalMinutes) + ". A " + formatARS(state.hourlyRate) + " la hora, van " + formatARS(view.totalAmount) + ": " + formatARS(view.closedAmount) + " de jornadas terminadas y " + formatARS(view.liveAmount) + " del turno de ahora." +
+            (view.paidAmount > 0 ? " Ya está pago " + formatARS(view.paidAmount) + "." : "");
         }
       }
       const liveLine = document.getElementById("liveLine");
@@ -382,21 +355,17 @@
         const elapsed = Math.max(0, Math.floor((state.now - Number(view.live.startTimestampMs)) / 60000));
         const money = Math.round((elapsed / 60) * state.hourlyRate);
         const fecha = String(view.live.startDateStr || "").split("-").reverse().join("/");
-        liveLine.textContent = "Abrió el " + fecha + " · " + formatHm(elapsed) + " · alrededor de " + formatARS(money);
+        liveLine.textContent = "Sigue en el local desde el " + fecha + ". Lleva " + formatHm(elapsed) + ". A " + formatARS(state.hourlyRate) + " la hora, este turno va en " + formatARS(money) + ".";
       }
       const dayLine = document.getElementById("liveDayLine");
       const dayPay = document.getElementById("liveDayPay");
-      if (dayLine) dayLine.textContent = "En curso · " + formatHm(view.liveMinutes);
+      if (dayLine) dayLine.textContent = "Trabajando · " + formatHm(view.liveMinutes);
       if (dayPay) dayPay.textContent = formatARS(view.liveAmount);
     }
 
-    try { state.authed = sessionStorage.getItem(SESSION_KEY) === "1"; } catch (e) { state.authed = false; }
-    if (state.authed) boot();
-    else renderGate();
+    boot();
     setInterval(tickLive, 1000);
-    setInterval(function () {
-      if (state.authed) loadData();
-    }, 12000);
+    setInterval(loadData, 12000);
   </script>
 </body>
 </html>
