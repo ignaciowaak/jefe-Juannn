@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>La semana de Ignacio · Punto Bici</title>
+  <title>Semana de Ignacio · Punto Bici</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,520;9..144,620&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -232,25 +232,25 @@
     }
 
     function weekSentence(view) {
-      if (view.totalMinutes <= 0) return "En esta semana todavía no hay horarios.";
-      let note = "Ese tiempo ya pasó en Punto Bici. A la hora convenida, lo que ya dio queda en " + formatARS(view.totalAmount) + ".";
+      if (view.totalMinutes <= 0) return "Esta semana no tiene horarios.";
+      let note = "Total " + formatHm(view.totalMinutes) + " · " + formatARS(view.totalAmount) + ".";
       if (view.liveAmount > 0) {
-        note += " " + formatARS(view.closedAmount) + " es de días ya cerrados y " + formatARS(view.liveAmount) + " es de hoy, que sigue abierto.";
+        note += " Cerrado " + formatARS(view.closedAmount) + ". En curso " + formatARS(view.liveAmount) + ".";
       }
-      if (view.paidAmount > 0) note += " Ya quedó liquidado " + formatARS(view.paidAmount) + ".";
+      if (view.paidAmount > 0) note += " Liquidado " + formatARS(view.paidAmount) + ".";
       const closedLeft = Math.max(0, view.closedAmount - view.paidAmount);
-      if (view.paidAmount > 0 && closedLeft > 0) note += " El resto de los días cerrados suma " + formatARS(closedLeft) + ".";
+      if (view.paidAmount > 0 && closedLeft > 0) note += " Resto " + formatARS(closedLeft) + ".";
       return note;
     }
 
     function weightLine(view) {
       if (view.totalMinutes <= 0) return "";
-      let line = "Estuvo " + view.daysThere + (view.daysThere === 1 ? " día." : " días.");
-      if (view.earliest) line += " Llegó a las " + view.earliest + ".";
+      let line = view.daysThere + (view.daysThere === 1 ? " día con horario" : " días con horario");
+      if (view.earliest) line += " · primera entrada " + view.earliest;
       if (view.longestMinutes > 0) {
         line += view.longestEnd
-          ? " El tramo más largo fueron " + formatHm(view.longestMinutes) + ", de " + view.longestStart + " a " + view.longestEnd + "."
-          : " El tramo más largo va en " + formatHm(view.longestMinutes) + " y todavía no cerró.";
+          ? " · jornada más larga " + formatHm(view.longestMinutes) + " (" + view.longestStart + "–" + view.longestEnd + ")"
+          : " · jornada más larga " + formatHm(view.longestMinutes) + ", en curso";
       }
       return line;
     }
@@ -260,18 +260,18 @@
       const today = argentinaDateStr();
       const updated = state.updatedAt == null
         ? "Actualizando…"
-        : "Se actualizó solo · hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
+        : "Actualizado hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
       const note = weekSentence(view);
 
       let liveHtml = "";
       if (view.live) {
         const elapsed = Math.max(0, Math.floor((state.now - Number(view.live.startTimestampMs)) / 60000));
         const money = Math.round((elapsed / 60) * state.hourlyRate);
-        liveHtml = '<div class="live"><p class="kicker">Hoy todavía está</p>' +
-          '<p class="big">Llegó a las ' + escapeHtml(view.live.startTimeStr || "--:--") + " y no se fue</p>" +
-          '<p class="sub" id="liveStay">Van ' + formatHm(elapsed) + " de este día. El tiempo sigue corriendo.</p>" +
+        liveHtml = '<div class="live"><p class="kicker">En curso</p>' +
+          '<p class="big">Desde las ' + escapeHtml(view.live.startTimeStr || "--:--") + "</p>" +
+          '<p class="sub" id="liveStay">' + formatHm(elapsed) + "</p>" +
           '<p class="formula" id="liveFormula">' + elapsed + " min × " + escapeHtml(formatARS(state.hourlyRate)) + " / 60</p>" +
-          '<p class="sub">La cuenta de hoy, por ahora, <span id="livePay">' + quietMoney(money) + "</span></p></div>";
+          '<p class="sub">Hoy, por ahora <span id="livePay">' + quietMoney(money) + "</span></p></div>";
       }
 
       const chips = view.days.map(function (day) {
@@ -283,27 +283,27 @@
       const list = view.days.map(function (day) {
         let body = "";
         if (day.worked.length === 0 && !day.franco && !day.openHere) {
-          body += '<p class="empty">Ese día no estuvo.</p>';
+          body += '<p class="empty">Sin horario</p>';
         }
         if (day.franco && day.worked.length === 0) {
-          body += '<p class="empty" style="color:var(--ink)">No estuvo · ' + escapeHtml(day.franco.reason || "franco") + "</p>";
+          body += '<p class="empty" style="color:var(--ink)">Franco' + (day.franco.reason ? " · " + escapeHtml(day.franco.reason) : "") + "</p>";
         }
         day.worked.forEach(function (rec) {
           const mins = Number(rec.totalMinutes) || 0;
           const rate = Number(rec.hourlyRate) || state.hourlyRate;
-          body += '<div class="shift"><p class="arrived">Estuvo desde las ' + escapeHtml(rec.startTime || "--:--") + "</p>" +
-            '<p class="left">Hasta las ' + escapeHtml(rec.endTime || "--:--") + "</p>" +
-            '<p class="stay">' + escapeHtml(rec.durationLabel || formatHm(mins)) + " de su día" +
-            (Number(rec.breakMinutes) > 0 ? " · " + rec.breakMinutes + " min de descanso" : "") + "</p>" +
+          body += '<div class="shift"><p class="eyebrow">Entrada</p><p class="arrived">' + escapeHtml(rec.startTime || "--:--") + "</p>" +
+            '<p class="eyebrow" style="margin-top:0.55rem">Salida</p><p class="arrived">' + escapeHtml(rec.endTime || "--:--") + "</p>" +
+            '<p class="stay">' + escapeHtml(rec.durationLabel || formatHm(mins)) +
+            (Number(rec.breakMinutes) > 0 ? " · descanso " + rec.breakMinutes + " min" : "") + "</p>" +
             '<p class="formula">' + mins + " min × " + escapeHtml(formatARS(rate)) + " / 60</p>" +
-            '<p class="line"><span>' + (rec.paidStatus === "paid" ? "Ya liquidado" : "Cuenta del día") + "</span>" + quietMoney(rec.totalAmount) + "</p></div>";
+            '<p class="line"><span>' + (rec.paidStatus === "paid" ? "Liquidado" : "Importe") + "</span>" + quietMoney(rec.totalAmount) + "</p></div>";
         });
         if (day.openHere && view.live) {
-          body += '<div class="shift"><p class="arrived">Llegó a las ' + escapeHtml(view.live.startTimeStr || "--:--") + "</p>" +
-            '<p class="left open">Y todavía no se fue</p>' +
-            '<p class="stay" id="liveDayStay">' + formatHm(view.liveMinutes) + " de este día, y sigue</p>" +
+          body += '<div class="shift"><p class="eyebrow">Entrada</p><p class="arrived">' + escapeHtml(view.live.startTimeStr || "--:--") + "</p>" +
+            '<p class="eyebrow open" style="margin-top:0.55rem">Salida</p><p class="arrived open">En curso</p>' +
+            '<p class="stay" id="liveDayStay">' + formatHm(view.liveMinutes) + "</p>" +
             '<p class="formula" id="liveDayFormula">' + view.liveMinutes + " min × " + escapeHtml(formatARS(state.hourlyRate)) + " / 60</p>" +
-            '<p class="line"><span>Cuenta de hoy, por ahora</span><span id="liveDayPay">' + quietMoney(view.liveAmount) + "</span></p></div>";
+            '<p class="line"><span>En curso</span><span id="liveDayPay">' + quietMoney(view.liveAmount) + "</span></p></div>";
         }
         return '<li class="card" id="dia-' + day.iso + '"><div class="rowhead"><p>' + day.short + " " + day.num + " " + day.month + "</p>" +
           (day.iso === today ? '<span class="hoy">Hoy</span>' : "") + "</div>" + body + "</li>";
@@ -314,18 +314,17 @@
         : '<p class="sync" style="margin:0">Esta semana</p>';
 
       document.getElementById("app").innerHTML =
-        '<header><p class="kicker">Punto Bici</p><h1>La semana de Ignacio</h1>' +
-        '<p class="lead ink">Juan, estas son las horas que ya dejó en el local. Cada vez que llegó y cada vez que se quedó.</p>' +
-        '<p class="lead">La hora convenida son ' + formatARS(state.hourlyRate) + '. Abajo la cuenta solo traduce ese tiempo, minuto por minuto.</p>' +
+        '<header><p class="kicker">Punto Bici</p><h1>Semana de Ignacio</h1>' +
+        '<p class="lead ink">Horarios, horas e importe.</p>' +
+        '<p class="lead">Hora ' + formatARS(state.hourlyRate) + '. Cada día muestra entrada, salida, minutos y el importe.</p>' +
         '<p class="sync" id="syncLabel" style="margin-top:0.7rem">' + updated + "</p></header>" +
         liveHtml +
         '<section class="hero">' +
-          '<p class="eyebrow">Tiempo que ya dio</p>' +
+          '<p class="eyebrow">Horas de la semana</p>' +
           '<p class="hours-big" id="weekHours">' + formatHm(view.totalMinutes) + "</p>" +
-          '<p class="stay">en el local, esta semana</p>' +
           (view.totalMinutes > 0 ? '<p class="lead" id="weightLine">' + escapeHtml(weightLine(view)) + "</p>" : "") +
-          '<div class="split"><div><p class="lbl">Hora convenida</p><p>' + quietMoney(state.hourlyRate) + "</p></div>" +
-          '<div><p class="lbl">Cuenta de esas horas</p><p id="weekPay">' + quietMoney(view.totalAmount) + "</p></div></div>" +
+          '<div class="split"><div><p class="lbl">Hora</p><p>' + quietMoney(state.hourlyRate) + "</p></div>" +
+          '<div><p class="lbl">Total</p><p id="weekPay">' + quietMoney(view.totalAmount) + "</p></div></div>" +
         "</section>" +
         '<p class="note" id="weekNote">' + note + "</p>" +
         (state.error ? '<p class="err">' + escapeHtml(state.error) + "</p>" : "") +
@@ -333,10 +332,7 @@
         '<div class="nav"><button type="button" class="round" id="btnPrev" aria-label="Semana anterior">‹</button>' +
           '<div class="nav-title"><p>' + weekTitle(view.week.days) + "</p>" + back + "</div>" +
           '<button type="button" class="round" id="btnNext" aria-label="Semana siguiente"' + (state.weekOffset >= 0 ? " disabled" : "") + ">›</button></div>" +
-        '<div class="strip">' + chips + "</div><ul>" + list + "</ul>" +
-        (view.totalMinutes > 0
-          ? '<p class="note">Ignacio ya estuvo esas horas. La cuenta no pide nada nuevo: nombra el tiempo que ya pasó, a la hora que habían convenido.</p>'
-          : "");
+        '<div class="strip">' + chips + "</div><ul>" + list + "</ul>";
 
       document.getElementById("btnPrev").onclick = function () { state.weekOffset -= 1; renderApp(); };
       document.getElementById("btnNext").onclick = function () {
@@ -392,7 +388,7 @@
       if (hours) hours.textContent = formatHm(view.totalMinutes);
       if (pay) pay.innerHTML = quietMoney(view.totalAmount);
       if (sync && state.updatedAt) {
-        sync.textContent = "Se actualizó solo · hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
+        sync.textContent = "Actualizado hace " + Math.max(0, Math.round((state.now - state.updatedAt) / 1000)) + " s";
       }
       if (note) note.textContent = weekSentence(view);
       const weight = document.getElementById("weightLine");
@@ -403,14 +399,14 @@
         const stay = document.getElementById("liveStay");
         const formula = document.getElementById("liveFormula");
         const livePay = document.getElementById("livePay");
-        if (stay) stay.textContent = "Van " + formatHm(elapsed) + " de este día. El tiempo sigue corriendo.";
+        if (stay) stay.textContent = formatHm(elapsed);
         if (formula) formula.textContent = elapsed + " min × " + formatARS(state.hourlyRate) + " / 60";
         if (livePay) livePay.innerHTML = quietMoney(money);
       }
       const dayStay = document.getElementById("liveDayStay");
       const dayFormula = document.getElementById("liveDayFormula");
       const dayPay = document.getElementById("liveDayPay");
-      if (dayStay) dayStay.textContent = formatHm(view.liveMinutes) + " de este día, y sigue";
+      if (dayStay) dayStay.textContent = formatHm(view.liveMinutes);
       if (dayFormula) dayFormula.textContent = view.liveMinutes + " min × " + formatARS(state.hourlyRate) + " / 60";
       if (dayPay) dayPay.innerHTML = quietMoney(view.liveAmount);
     }
