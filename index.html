@@ -117,6 +117,15 @@
       return Math.floor(m / 60) + " h " + String(m % 60).padStart(2, "0") + " min";
     }
 
+    var CONTRACT_MIN = 8 * 60;
+
+    function contractLine(mins) {
+      const m = Math.max(0, Math.round(Number(mins) || 0));
+      if (m < CONTRACT_MIN) return "8 h · faltan " + formatHm(CONTRACT_MIN - m);
+      if (m === CONTRACT_MIN) return "Cumplió las 8 h del acuerdo.";
+      return "Cumplió las 8 h del acuerdo. Extra: " + formatHm(m - CONTRACT_MIN) + ".";
+    }
+
     function cap(value) {
       if (!value) return "";
       return value.charAt(0).toUpperCase() + value.slice(1);
@@ -198,8 +207,10 @@
       let longestMinutes = 0;
       let longestStart = null;
       let longestEnd = null;
+      let weekExtraMinutes = 0;
       days.forEach(function (day) {
         const total = day.mins + (day.openHere ? liveMinutes : 0);
+        if (total > CONTRACT_MIN) weekExtraMinutes += total - CONTRACT_MIN;
         if (total > 0) daysThere += 1;
         day.worked.forEach(function (rec) {
           if (rec.startTime && (!earliest || rec.startTime < earliest)) earliest = rec.startTime;
@@ -231,6 +242,13 @@
         timeZone: "America/Argentina/Buenos_Aires",
         month: "long"
       }).format(new Date());
+      const elapsedLive = live ? Math.max(0, Math.floor((state.now - Number(live.startTimestampMs)) / 60000)) : 0;
+      let todayClosed = 0;
+      if (live && live.startDateStr) {
+        records.forEach(function (rec) {
+          if (rec.date === live.startDateStr && rec.type !== "non_worked") todayClosed += Number(rec.totalMinutes) || 0;
+        });
+      }
       return {
         week: week, days: days, live: live,
         closedAmount: closedAmount, pendingAmount: pendingAmount, paidAmount: paidAmount,
@@ -239,7 +257,9 @@
         totalMinutes: closedMinutes + liveMinutes,
         daysThere: daysThere, earliest: earliest,
         longestMinutes: longestMinutes, longestStart: longestStart, longestEnd: longestEnd,
-        monthName: monthName, monthMinutes: monthMinutes, monthAmount: monthAmount
+        monthName: monthName, monthMinutes: monthMinutes, monthAmount: monthAmount,
+        weekExtraMinutes: weekExtraMinutes,
+        contractMinutes: todayClosed + elapsedLive
       };
     }
 
@@ -256,6 +276,7 @@
       if (view.paidAmount > 0) note += (note ? " " : "") + "Liquidado " + formatARS(view.paidAmount) + ".";
       const closedLeft = Math.max(0, view.closedAmount - view.paidAmount);
       if (view.paidAmount > 0 && closedLeft > 0) note += " Resto " + formatARS(closedLeft) + ".";
+      if (view.weekExtraMinutes > 0) note += (note ? " " : "") + "Extra " + formatHm(view.weekExtraMinutes) + ".";
       return note;
     }
 
@@ -290,6 +311,7 @@
         liveHtml = '<div class="live"><p class="kicker">En curso</p>' +
           '<p class="big">Desde las ' + escapeHtml(view.live.startTimeStr || "--:--") + "</p>" +
           '<p class="sub" id="liveStay">' + formatHm(elapsed) + "</p>" +
+          '<p class="sub" id="contractLine">' + escapeHtml(contractLine(view.contractMinutes)) + "</p>" +
           '<p class="formula" id="liveFormula">' + elapsed + " min × " + escapeHtml(formatARS(state.hourlyRate)) + " / 60</p>" +
           '<p class="sub">Hoy, por ahora <span id="livePay">' + quietMoney(money) + "</span></p></div>";
       }
@@ -318,6 +340,9 @@
             '<p class="formula">' + mins + " min × " + escapeHtml(formatARS(rate)) + " / 60</p>" +
             '<p class="line"><span>' + (rec.paidStatus === "paid" ? "Liquidado" : "Importe") + "</span>" + quietMoney(rec.totalAmount) + "</p></div>";
         });
+        if (!day.openHere && day.mins > CONTRACT_MIN) {
+          body += '<p class="stay">Extra ' + formatHm(day.mins - CONTRACT_MIN) + "</p>";
+        }
         if (day.openHere && view.live) {
           body += '<div class="shift"><p class="eyebrow">Entrada</p><p class="arrived">' + escapeHtml(view.live.startTimeStr || "--:--") + "</p>" +
             '<p class="stay open">En curso</p></div>';
@@ -419,6 +444,8 @@
         const formula = document.getElementById("liveFormula");
         const livePay = document.getElementById("livePay");
         if (stay) stay.textContent = formatHm(elapsed);
+        const contract = document.getElementById("contractLine");
+        if (contract) contract.textContent = contractLine(view.contractMinutes);
         if (formula) formula.textContent = elapsed + " min × " + formatARS(state.hourlyRate) + " / 60";
         if (livePay) livePay.innerHTML = quietMoney(money);
       }
